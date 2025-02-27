@@ -1,10 +1,7 @@
 package com.fachri.audiostreamingcompose.page
 
-import android.content.Context
-import android.media.AudioManager
 import android.media.MediaPlayer
 import android.net.Uri
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -57,13 +54,17 @@ import com.fachri.audiostreamingcompose.core.orange
 import com.fachri.audiostreamingcompose.network.model.VoiceOption
 import com.fachri.audiostreamingcompose.network.model.bgColor
 import com.fachri.audiostreamingcompose.network.model.borderColor
+import com.fachri.audiostreamingcompose.network.service.API
 import com.google.gson.Gson
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class GreetingsViewModel : ViewModel() {
+class GreetingsViewModel(
+    private val api: API,
+    private var mediaPlayer: MediaPlayer = MediaPlayer()
+) : ViewModel() {
 
     private val _voices = MutableStateFlow(emptyList<VoiceOption>())
     val voices: StateFlow<List<VoiceOption>> = _voices.asStateFlow()
@@ -73,8 +74,6 @@ class GreetingsViewModel : ViewModel() {
 
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
-
-    private var mediaPlayer: MediaPlayer? = null
 
     fun fetchVoices() {
         viewModelScope.launch {
@@ -89,35 +88,38 @@ class GreetingsViewModel : ViewModel() {
         }
     }
 
-    fun selectVoice(context: Context, voice: VoiceOption) {
-        _selectedVoice.value = voice
-        playSound(context, voice.soundUrlString)
+    fun fetch() {
+        viewModelScope.launch {
+            api.fetchGreetings()
+                .onSuccess { voices ->
+                    _voices.value = voices
+                }
+                .onFailure { error ->
+                    _errorMessage.value = error.localizedMessage
+                }
+        }
     }
 
-    private fun playSound(context: Context, url: String) {
-        mediaPlayer?.release() // Stop and release any previous instance
-        mediaPlayer = MediaPlayer().apply {
-            setAudioStreamType(AudioManager.STREAM_MUSIC)
-            setDataSource(context, Uri.parse(url))
-            setOnPreparedListener {
-                start()
-            }
-            setOnCompletionListener {
-                release()
-            }
-            setOnErrorListener { _, _, _ ->
-                release()
-                false
-            }
-            prepareAsync() // Use async preparation
+    fun selectVoice(voice: VoiceOption) {
+        _selectedVoice.value = voice
+        playSound(voice.soundUrlString)
+    }
+
+     fun playSound(urlString: String) {
+        viewModelScope.launch {
+            mediaPlayer.release()
+
+            mediaPlayer = MediaPlayer()
+            mediaPlayer.setDataSource(urlString)
+            mediaPlayer.prepare()
+            mediaPlayer.start()
         }
     }
 
     fun stopAudio() {
         viewModelScope.launch {
-            mediaPlayer?.stop()
-            mediaPlayer?.release()
-            mediaPlayer = null
+            mediaPlayer.stop()
+            mediaPlayer.release()
         }
     }
 
@@ -126,9 +128,9 @@ class GreetingsViewModel : ViewModel() {
 @Composable
 fun GreetingPage(
     navController: NavController,
-    viewModel: GreetingsViewModel = remember { GreetingsViewModel() }
+    api: API = API(context = LocalContext.current),
+    viewModel: GreetingsViewModel = remember { GreetingsViewModel(api = api) }
 ) {
-    val context = LocalContext.current
     val voices by viewModel.voices.collectAsState()
     val selectedVoice by viewModel.selectedVoice.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
@@ -157,7 +159,6 @@ fun GreetingPage(
         LottieAnimation(
             composition,
             progress = {
-                Log.d("page", "animationState.progress ${lottieAnimatable.progress}")
                 lottieAnimatable.progress
             },
             modifier = Modifier.size(150.dp)
@@ -174,7 +175,7 @@ fun GreetingPage(
                     val voice = voices[index]
                     VoiceButtonView(index, voice, selectedVoice) {
                         scope.launch {
-                            viewModel.selectVoice(context, voice)
+                            viewModel.selectVoice(voice)
                             lottieAnimatable.animate(composition = composition)
                         }
                     }

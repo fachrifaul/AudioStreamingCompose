@@ -18,6 +18,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -39,25 +40,20 @@ import com.airbnb.lottie.compose.rememberLottieComposition
 import com.fachri.audiostreamingcompose.network.model.VoiceOption
 import com.fachri.audiostreamingcompose.network.service.API
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.io.IOException
 
-class ConversationsViewModel(private val api: API, private val voiceOption: VoiceOption) :
-    ViewModel() {
+class ConversationsViewModel(
+    private val api: API,
+    private val voiceOption: VoiceOption,
+    private var mediaPlayer: MediaPlayer = MediaPlayer()
+) : ViewModel() {
 
     private val _text = MutableStateFlow<String?>(null)
-    val text: StateFlow<String?> = _text.asStateFlow()
+    val text = _text.asStateFlow()
 
     private val _errorMessage = MutableStateFlow<String?>(null)
-    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
-
-    private var mediaPlayer: MediaPlayer? = null
-
-    init {
-        fetch()
-    }
+    val errorMessage = _errorMessage.asStateFlow()
 
     fun fetch(randomSampleId: Int = (2..20).random()) {
         viewModelScope.launch {
@@ -78,23 +74,17 @@ class ConversationsViewModel(private val api: API, private val voiceOption: Voic
     }
 
     private fun startAudio(urlString: String) {
-        mediaPlayer?.release()
-        mediaPlayer = MediaPlayer().apply {
-            try {
-                setDataSource(urlString)
-                prepare()
-                start()
-            } catch (e: IOException) {
-                _errorMessage.value = e.localizedMessage
-            }
+        viewModelScope.launch {
+            mediaPlayer.setDataSource(urlString)
+            mediaPlayer.prepare()
+            mediaPlayer.start()
         }
     }
 
     fun stopAudio() {
         viewModelScope.launch {
-            mediaPlayer?.stop()
-            mediaPlayer?.release()
-            mediaPlayer = null
+            mediaPlayer.stop()
+            mediaPlayer.release()
         }
     }
 }
@@ -104,17 +94,22 @@ fun ConversationsPage(
     navController: NavController,
     api: API = API(context = LocalContext.current),
     voiceOption: VoiceOption,
+    viewModel: ConversationsViewModel = remember {
+        ConversationsViewModel(
+            api = api,
+            voiceOption = voiceOption
+        )
+    }
 ) {
     val composition by rememberLottieComposition(LottieCompositionSpec.Url("https://static.dailyfriend.ai/images/mascot-animation.json"))
     val progress by animateLottieCompositionAsState(composition)
 
-    val viewModel: ConversationsViewModel = remember {
-        ConversationsViewModel(
-            api = api, voiceOption = voiceOption
-        )
-    }
     val text by viewModel.text.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.fetch()
+    }
 
     DisposableEffect(Unit) {
         onDispose {
@@ -171,7 +166,6 @@ fun ConversationsPage(
 fun ConversationPagePreview() {
     ConversationsPage(
         navController = rememberNavController(),
-        api = API(context = LocalContext.current),
         voiceOption = VoiceOption(voiceId = 1, sampleId = 1, name = "Meadow")
     )
 }
