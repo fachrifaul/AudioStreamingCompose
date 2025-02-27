@@ -1,4 +1,4 @@
-package com.fachri.audiostreamingcompose.network.service
+package com.fachri.audiostreamingcompose.network
 
 import android.content.Context
 import com.fachri.audiostreamingcompose.network.model.VoiceOption
@@ -24,13 +24,13 @@ class API(private val context: Context) {
     private val gson = Gson()
 
     private val authEndpoint = "https://static.dailyfriend.ai/api/auth"
-    private val voicesEndpoint = "https://static.dailyfriend.ai/api/greetings"
+    private val greetingsEndpoint = "https://static.dailyfriend.ai/api/greetings"
 
     suspend fun fetchGreetings(): Result<List<VoiceOption>> = withContext(Dispatchers.IO) {
         try {
 //            val token = getValidJWTToken()
             val request = Request.Builder()
-                .url(voicesEndpoint)
+                .url(greetingsEndpoint)
 //                .addHeader("Authorization", "Bearer $token")
                 .build()
 

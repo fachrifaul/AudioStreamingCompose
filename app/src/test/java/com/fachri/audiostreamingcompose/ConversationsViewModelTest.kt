@@ -1,6 +1,6 @@
 import android.media.MediaPlayer
 import com.fachri.audiostreamingcompose.network.model.VoiceOption
-import com.fachri.audiostreamingcompose.network.service.API
+import com.fachri.audiostreamingcompose.network.API
 import com.fachri.audiostreamingcompose.page.ConversationsViewModel
 import io.mockk.coEvery
 import io.mockk.mockk

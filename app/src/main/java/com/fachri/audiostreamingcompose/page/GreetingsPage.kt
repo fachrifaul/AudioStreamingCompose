@@ -54,7 +54,7 @@ import com.fachri.audiostreamingcompose.core.orange
 import com.fachri.audiostreamingcompose.network.model.VoiceOption
 import com.fachri.audiostreamingcompose.network.model.bgColor
 import com.fachri.audiostreamingcompose.network.model.borderColor
-import com.fachri.audiostreamingcompose.network.service.API
+import com.fachri.audiostreamingcompose.network.API
 import com.google.gson.Gson
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -136,7 +136,9 @@ fun GreetingPage(
     val errorMessage by viewModel.errorMessage.collectAsState()
     val scope = rememberCoroutineScope()
 
-    val composition by rememberLottieComposition(LottieCompositionSpec.Url("https://static.dailyfriend.ai/images/mascot-animation.json"))
+    val composition by rememberLottieComposition(
+        LottieCompositionSpec.Url("https://static.dailyfriend.ai/images/mascot-animation.json")
+    )
     val lottieAnimatable = rememberLottieAnimatable()
 
 

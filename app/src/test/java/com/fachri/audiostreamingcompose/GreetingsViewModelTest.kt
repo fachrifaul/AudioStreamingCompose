@@ -2,7 +2,7 @@ package com.fachri.audiostreamingcompose
 
 import android.media.MediaPlayer
 import com.fachri.audiostreamingcompose.network.model.VoiceOption
-import com.fachri.audiostreamingcompose.network.service.API
+import com.fachri.audiostreamingcompose.network.API
 import com.fachri.audiostreamingcompose.page.GreetingsViewModel
 import io.mockk.Runs
 import io.mockk.coEvery

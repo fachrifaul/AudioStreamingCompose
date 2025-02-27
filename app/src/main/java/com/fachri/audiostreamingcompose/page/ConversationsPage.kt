@@ -38,7 +38,7 @@ import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.fachri.audiostreamingcompose.network.model.VoiceOption
-import com.fachri.audiostreamingcompose.network.service.API
+import com.fachri.audiostreamingcompose.network.API
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -101,7 +101,9 @@ fun ConversationsPage(
         )
     }
 ) {
-    val composition by rememberLottieComposition(LottieCompositionSpec.Url("https://static.dailyfriend.ai/images/mascot-animation.json"))
+    val composition by rememberLottieComposition(
+        LottieCompositionSpec.Url("https://static.dailyfriend.ai/images/mascot-animation.json")
+    )
     val progress by animateLottieCompositionAsState(composition)
 
     val text by viewModel.text.collectAsState()
