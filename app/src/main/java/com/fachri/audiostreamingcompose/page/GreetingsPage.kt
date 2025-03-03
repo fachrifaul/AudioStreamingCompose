@@ -1,6 +1,5 @@
 package com.fachri.audiostreamingcompose.page
 
-import android.media.MediaPlayer
 import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -50,11 +49,14 @@ import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.rememberLottieAnimatable
 import com.airbnb.lottie.compose.rememberLottieComposition
+import com.fachri.audiostreamingcompose.core.AudioPlayer
+import com.fachri.audiostreamingcompose.core.AudioPlayerInterface
+import com.fachri.audiostreamingcompose.core.AudioPlayerStreaming
 import com.fachri.audiostreamingcompose.core.orange
+import com.fachri.audiostreamingcompose.network.API
 import com.fachri.audiostreamingcompose.network.model.VoiceOption
 import com.fachri.audiostreamingcompose.network.model.bgColor
 import com.fachri.audiostreamingcompose.network.model.borderColor
-import com.fachri.audiostreamingcompose.network.API
 import com.google.gson.Gson
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -63,7 +65,7 @@ import kotlinx.coroutines.launch
 
 class GreetingsViewModel(
     private val api: API,
-    private var mediaPlayer: MediaPlayer = MediaPlayer()
+    private var audioPlayer: AudioPlayerInterface = AudioPlayer()
 ) : ViewModel() {
 
     private val _voices = MutableStateFlow(emptyList<VoiceOption>())
@@ -105,21 +107,16 @@ class GreetingsViewModel(
         playSound(voice.soundUrlString)
     }
 
-     fun playSound(urlString: String) {
+    fun playSound(urlString: String) {
         viewModelScope.launch {
-            mediaPlayer.release()
-
-            mediaPlayer = MediaPlayer()
-            mediaPlayer.setDataSource(urlString)
-            mediaPlayer.prepare()
-            mediaPlayer.start()
+            audioPlayer.stop()
+            audioPlayer.play(urlString)
         }
     }
 
     fun stopAudio() {
         viewModelScope.launch {
-            mediaPlayer.stop()
-            mediaPlayer.release()
+            audioPlayer.stop()
         }
     }
 
@@ -127,10 +124,19 @@ class GreetingsViewModel(
 
 @Composable
 fun GreetingPage(
-    navController: NavController,
-    api: API = API(context = LocalContext.current),
-    viewModel: GreetingsViewModel = remember { GreetingsViewModel(api = api) }
+    navController: NavController
 ) {
+    val context = LocalContext.current
+    val audioPlayer = remember { AudioPlayerStreaming(context) }
+//    val audioPlayer = remember { AudioPlayer() }
+
+    val viewModel: GreetingsViewModel = remember {
+        GreetingsViewModel(
+            api = API(context = context),
+            audioPlayer = audioPlayer
+        )
+    }
+
     val voices by viewModel.voices.collectAsState()
     val selectedVoice by viewModel.selectedVoice.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
@@ -189,7 +195,9 @@ fun GreetingPage(
                     viewModel.stopAudio()
 
                     val json = Uri.encode(Gson().toJson(viewModel.selectedVoice.value))
-                    navController.navigate("conversation/${json}")
+                    navController.navigate("conversation/${json}") {
+                        restoreState = true
+                    }
                 },
                 enabled = selectedVoice != null,
                 modifier = Modifier

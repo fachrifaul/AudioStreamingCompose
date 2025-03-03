@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
+    id("kotlin-parcelize")
 }
 
 android {
@@ -66,6 +67,8 @@ dependencies {
     implementation("io.coil-kt:coil-svg:2.6.0")
     implementation("com.google.code.gson:gson:2.10.1")
     implementation(libs.androidx.lifecycle.runtime.testing)
+    implementation("androidx.media3:media3-exoplayer:1.2.0")
+    implementation("androidx.media3:media3-ui:1.2.0")
 
     testImplementation("androidx.arch.core:core-testing:2.1.0")
     testImplementation(libs.junit)

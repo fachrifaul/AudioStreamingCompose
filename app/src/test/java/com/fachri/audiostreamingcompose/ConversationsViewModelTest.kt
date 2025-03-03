@@ -1,6 +1,6 @@
-import android.media.MediaPlayer
-import com.fachri.audiostreamingcompose.network.model.VoiceOption
+import com.fachri.audiostreamingcompose.core.AudioPlayerInterface
 import com.fachri.audiostreamingcompose.network.API
+import com.fachri.audiostreamingcompose.network.model.VoiceOption
 import com.fachri.audiostreamingcompose.page.ConversationsViewModel
 import io.mockk.coEvery
 import io.mockk.mockk
@@ -25,7 +25,7 @@ class ConversationsViewModelTest {
     private val testDispatcher = TestCoroutineDispatcher()
 
     private lateinit var api: API
-    private lateinit var mediaPlayerMock: MediaPlayer
+    private lateinit var mockAudioPlayer: AudioPlayerInterface
     private lateinit var viewModel: ConversationsViewModel
 
     private val voiceOption = VoiceOption(voiceId = 1, sampleId = 1, name = "Meadow")
@@ -34,9 +34,9 @@ class ConversationsViewModelTest {
     fun setup() {
         Dispatchers.setMain(testDispatcher)
 
-        mediaPlayerMock = mockk<MediaPlayer>(relaxed = true)
+        mockAudioPlayer = mockk<AudioPlayerInterface>(relaxed = true)
         api = mockk(relaxed = true)
-        viewModel = spyk(ConversationsViewModel(api, voiceOption, mediaPlayerMock))
+        viewModel = spyk(ConversationsViewModel(api, voiceOption, mockAudioPlayer))
     }
 
     @After
@@ -58,9 +58,7 @@ class ConversationsViewModelTest {
 
         // Then
         assertEquals(transcription, viewModel.text.value)
-        verify { mediaPlayerMock.setDataSource(any<String>()) }
-        verify { mediaPlayerMock.prepare() }
-        verify { mediaPlayerMock.start() }
+        verify { mockAudioPlayer.play(any<String>()) }
     }
 
     @Test
@@ -87,8 +85,7 @@ class ConversationsViewModelTest {
         viewModel.stopAudio()
 
         // Then
-        verify { mediaPlayerMock.stop() }
-        verify { mediaPlayerMock.release() }
+        verify { mockAudioPlayer.stop() }
     }
 
 }

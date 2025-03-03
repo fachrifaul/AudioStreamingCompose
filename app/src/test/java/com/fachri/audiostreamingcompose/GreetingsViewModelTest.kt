@@ -1,8 +1,8 @@
 package com.fachri.audiostreamingcompose
 
-import android.media.MediaPlayer
-import com.fachri.audiostreamingcompose.network.model.VoiceOption
+import com.fachri.audiostreamingcompose.core.AudioPlayerInterface
 import com.fachri.audiostreamingcompose.network.API
+import com.fachri.audiostreamingcompose.network.model.VoiceOption
 import com.fachri.audiostreamingcompose.page.GreetingsViewModel
 import io.mockk.Runs
 import io.mockk.coEvery
@@ -29,16 +29,16 @@ class GreetingsViewModelTest {
     private val testDispatcher = TestCoroutineDispatcher()
 
     private lateinit var api: API
-    private lateinit var mediaPlayerMock: MediaPlayer
+    private lateinit var mockAudioPlayer: AudioPlayerInterface
     private lateinit var viewModel: GreetingsViewModel
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
 
-        mediaPlayerMock = mockk<MediaPlayer>(relaxed = true)
+        mockAudioPlayer = mockk<AudioPlayerInterface>(relaxed = true)
         api = mockk(relaxed = true)
-        viewModel = spyk(GreetingsViewModel(api, mediaPlayerMock))
+        viewModel = spyk(GreetingsViewModel(api, mockAudioPlayer))
     }
 
     @After
@@ -84,15 +84,13 @@ class GreetingsViewModelTest {
     @Test
     fun `stopAudio should stop and release media player`() = runTest {
         // Given
-        val mediaPlayer = mockk<MediaPlayer>(relaxed = true)
-        viewModel = GreetingsViewModel(api = api, mediaPlayer = mediaPlayer)
+        viewModel = GreetingsViewModel(api = api, audioPlayer = mockAudioPlayer)
 
         // When
         viewModel.stopAudio()
 
         // Then
-        verify { mediaPlayer.stop() }
-        verify { mediaPlayer.release() }
+        verify { mockAudioPlayer.stop() }
     }
 
     @Test

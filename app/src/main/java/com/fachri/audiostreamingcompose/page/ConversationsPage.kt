@@ -1,6 +1,5 @@
 package com.fachri.audiostreamingcompose.page
 
-import android.media.MediaPlayer
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,8 +36,11 @@ import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
-import com.fachri.audiostreamingcompose.network.model.VoiceOption
+import com.fachri.audiostreamingcompose.core.AudioPlayer
+import com.fachri.audiostreamingcompose.core.AudioPlayerInterface
+import com.fachri.audiostreamingcompose.core.AudioPlayerStreaming
 import com.fachri.audiostreamingcompose.network.API
+import com.fachri.audiostreamingcompose.network.model.VoiceOption
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -46,7 +48,7 @@ import kotlinx.coroutines.launch
 class ConversationsViewModel(
     private val api: API,
     private val voiceOption: VoiceOption,
-    private var mediaPlayer: MediaPlayer = MediaPlayer()
+    private var audioPlayer: AudioPlayerInterface = AudioPlayer()
 ) : ViewModel() {
 
     private val _text = MutableStateFlow<String?>(null)
@@ -75,16 +77,13 @@ class ConversationsViewModel(
 
     private fun startAudio(urlString: String) {
         viewModelScope.launch {
-            mediaPlayer.setDataSource(urlString)
-            mediaPlayer.prepare()
-            mediaPlayer.start()
+            audioPlayer.play(urlString)
         }
     }
 
     fun stopAudio() {
         viewModelScope.launch {
-            mediaPlayer.stop()
-            mediaPlayer.release()
+            audioPlayer.stop()
         }
     }
 }
@@ -93,18 +92,24 @@ class ConversationsViewModel(
 fun ConversationsPage(
     navController: NavController,
     api: API = API(context = LocalContext.current),
-    voiceOption: VoiceOption,
-    viewModel: ConversationsViewModel = remember {
-        ConversationsViewModel(
-            api = api,
-            voiceOption = voiceOption
-        )
-    }
+    voiceOption: VoiceOption
 ) {
     val composition by rememberLottieComposition(
         LottieCompositionSpec.Url("https://static.dailyfriend.ai/images/mascot-animation.json")
     )
     val progress by animateLottieCompositionAsState(composition)
+
+    val context = LocalContext.current
+//    val audioPlayer = remember { AudioPlayerStreaming(context) }
+    val audioPlayer = remember { AudioPlayer() }
+
+    val viewModel = remember {
+        ConversationsViewModel(
+            api = api,
+            voiceOption = voiceOption,
+            audioPlayer = audioPlayer
+        )
+    }
 
     val text by viewModel.text.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
