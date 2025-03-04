@@ -51,7 +51,7 @@ import com.airbnb.lottie.compose.rememberLottieAnimatable
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.fachri.audiostreamingcompose.core.AudioPlayer
 import com.fachri.audiostreamingcompose.core.AudioPlayerInterface
-import com.fachri.audiostreamingcompose.core.AudioPlayerStreaming
+import com.fachri.audiostreamingcompose.core.AudioPlayerTrack
 import com.fachri.audiostreamingcompose.core.orange
 import com.fachri.audiostreamingcompose.network.API
 import com.fachri.audiostreamingcompose.network.model.VoiceOption
@@ -127,8 +127,9 @@ fun GreetingPage(
     navController: NavController
 ) {
     val context = LocalContext.current
-    val audioPlayer = remember { AudioPlayerStreaming(context) }
-//    val audioPlayer = remember { AudioPlayer() }
+//    val audioPlayer = AudioPlayer()
+//    val audioPlayer = AudioPlayerStreaming(context)
+    val audioPlayer = AudioPlayerTrack()
 
     val viewModel: GreetingsViewModel = remember {
         GreetingsViewModel(
@@ -178,7 +179,10 @@ fun GreetingPage(
             Text(errorMessage!!, color = Color.Red)
             Button(onClick = { viewModel.fetchVoices() }) { Text("Retry") }
         } else if (voices.isNotEmpty()) {
-            LazyVerticalGrid(columns = GridCells.Fixed(2), modifier = Modifier.fillMaxWidth()) {
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 items(voices.size) { index ->
                     val voice = voices[index]
                     VoiceButtonView(index, voice, selectedVoice) {
